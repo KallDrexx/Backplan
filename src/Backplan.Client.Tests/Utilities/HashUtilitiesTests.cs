@@ -27,7 +27,7 @@ namespace Backplan.Client.Tests.Utilities
                 writer.Flush();
                 stream.Position = 0;
 
-                resultHash = HashUtilities.GenerateHash(stream);
+                resultHash = new HashUtils().GenerateHash(stream);
             }
 
             Assert.AreEqual(expectedHash, resultHash, "Generated hash was incorrect");

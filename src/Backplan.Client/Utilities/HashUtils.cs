@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Backplan.Client.Utilities
 {
-    public static class HashUtilities
+    public class HashUtils : IHashUtils
     {
-        public static string GenerateHash(Stream stream)
+        public string GenerateHash(Stream stream)
         {
             var md5 = MD5.Create();
             var hashBytes = md5.ComputeHash(stream);
