@@ -100,5 +100,53 @@ namespace Backplan.Client.Tests.IO
 
             _mockContainer.Assert<ITrackedFileStore>(x => x.AddFileActionToTrackedFile(Arg.IsAny<TrackedFile>(), Arg.IsAny<TrackedFileAction>()));
         }
+
+        [TestMethod]
+        public void Action_Added_When_File_Size_Doesnt_Match()
+        {
+            const string filePath = @"C:\Test";
+            const string fileName = "abc.def";
+            const int fileLength = 100;
+            DateTime writeTime = DateTime.Now.ToUniversalTime();
+
+            var trackedFile = new TrackedFile
+            {
+                Actions = new[] 
+                {
+                    new TrackedFileAction 
+                    {
+                        Path = filePath,
+                        FileName = fileName,
+                        Action = FileActions.Added,
+                        FileLength = fileLength,
+                        FileLastModifiedDateUtc = writeTime,
+                        EffectiveDateUtc = DateTime.Now.ToUniversalTime()
+                    }
+                }
+            };
+
+            var fileInfo = Mock.Create<IFileInfoWrap>();
+            Mock.Arrange(() => fileInfo.Length).Returns(fileLength + 1);
+            Mock.Arrange(() => fileInfo.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime));
+            Mock.Arrange(() => fileInfo.Name).Returns(fileName);
+            Mock.Arrange(() => fileInfo.DirectoryName).Returns(filePath);
+
+            _mockContainer.Arrange<ITrackedFileStore>(x => x.GetTrackedFilesInPath(filePath))
+                          .Returns(new[] { trackedFile });
+
+            _mockContainer.Arrange<IPathDetails>(x => x.GetFileInfo(Path.Combine(filePath, fileName)))
+                          .Returns(fileInfo);
+
+            var expectedAction = Arg.Matches<TrackedFileAction>(x => x.Action == FileActions.Modified &&
+                                                                    x.FileLength == fileLength + 1);
+
+            _mockContainer.Arrange<ITrackedFileStore>(x => x.AddFileActionToTrackedFile(Arg.IsAny<TrackedFile>(), expectedAction))
+                          .OccursOnce();
+
+            var instance = _mockContainer.Instance;
+            instance.CheckDirectoryContents(filePath);
+
+            _mockContainer.Assert<ITrackedFileStore>(x => x.AddFileActionToTrackedFile(Arg.IsAny<TrackedFile>(), Arg.IsAny<TrackedFileAction>()));
+        }
     }
 }

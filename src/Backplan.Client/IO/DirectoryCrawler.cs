@@ -37,6 +37,21 @@ namespace Backplan.Client.IO
 
                 var filePath = Path.Combine(lastAction.Path, lastAction.FileName);
                 var fileInfo = _pathDetails.GetFileInfo(filePath);
+
+                // Check if the file was modified at all
+                if (lastAction.FileLength != fileInfo.Length)
+                {
+                    var newAction = new TrackedFileAction
+                    {
+                        Action = FileActions.Modified,
+                        Path = fileInfo.DirectoryName,
+                        FileName = fileInfo.Name,
+                        FileLength = fileInfo.Length,
+                        EffectiveDateUtc = DateTime.Now.ToUniversalTime()
+                    };
+
+                    _trackedFileStore.AddFileActionToTrackedFile(trackedFile, newAction);
+                }
             }
 
             var filesInDirectory = _pathDetails.GetFilesInPath(path);
