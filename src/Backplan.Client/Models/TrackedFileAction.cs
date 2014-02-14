@@ -8,12 +8,12 @@ namespace Backplan.Client.Models
 {
     public class TrackedFileAction
     {
-        public int Id { get; set; }
+        public int Id { get; set; } 
         public string FileName { get; set; }
         public string Path { get; set; }
-        public DateTime FileLastModifiedDate { get; set; }
+        public DateTime FileLastModifiedDateUtc { get; set; }
         public long FileLength { get; set; }
         public FileActions Action { get; set; }
-        public DateTime Date { get; set; }
+        public DateTime EffectiveDateUtc { get; set; }
     }
 }

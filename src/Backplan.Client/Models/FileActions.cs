@@ -12,6 +12,7 @@ namespace Backplan.Client.Models
         Added,
         Modified,
         Deleted,
-        Renamed
+        Renamed,
+        Moved
     }
 }

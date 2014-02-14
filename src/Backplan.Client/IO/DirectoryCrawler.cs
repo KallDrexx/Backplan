@@ -6,22 +6,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SystemWrapper.IO;
+using Backplan.Client.Models;
 
 namespace Backplan.Client.IO
 {
     public class DirectoryCrawler
     {
-        private IPathWrap _path;
-        private IDirectoryWrap _directory;
+        private IPathDetails _pathDetails;
         private ITrackedFileStore _trackedFileStore;
-        private IFileWrap _file;
 
-        public DirectoryCrawler(IPathWrap path, ITrackedFileStore trackedFileStore, IDirectoryWrap directory, IFileWrap file)
+        public DirectoryCrawler(ITrackedFileStore trackedFileStore, IPathDetails pathDetails)
         {
-            _path = path;
+            _pathDetails = pathDetails;
             _trackedFileStore = trackedFileStore;
-            _directory = directory;
-            _file = file;
         }
 
         public void CheckDirectoryContents(string baseDirectory)
@@ -31,16 +28,22 @@ namespace Backplan.Client.IO
 
         private void CrawlDirectory(string path)
         {
-            var trackedFiles = _trackedFileStore.GetTrackedFilesInPath(path);
+            var trackedFiles = _trackedFileStore.GetTrackedFilesInPath(path) ?? new TrackedFile[0];
+            foreach (var trackedFile in trackedFiles)
+            {
+                var lastAction = trackedFile.Actions
+                                            .OrderByDescending(x => x.EffectiveDateUtc)
+                                            .First();
 
-            var filesInDirectory = _directory.GetFiles(path);
+                var filePath = Path.Combine(lastAction.Path, lastAction.FileName);
+                var fileInfo = _pathDetails.GetFileInfo(filePath);
+            }
+
+            var filesInDirectory = _pathDetails.GetFilesInPath(path);
             foreach (var filename in filesInDirectory)
             {
-                var attributes = _file.GetAttributes(filename);
-                if ((attributes & FileAttributes.Directory) == FileAttributes.Directory)
-                {
+                if (_pathDetails.IsDirectory(filename))
                     CrawlDirectory(filename);
-                }
             }
         }
     }

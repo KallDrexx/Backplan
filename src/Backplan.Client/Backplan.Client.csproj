@@ -60,6 +60,7 @@
     </ApplicationDefinition>
     <Compile Include="Database\ITrackedFileStore.cs" />
     <Compile Include="IO\DirectoryCrawler.cs" />
+    <Compile Include="IO\IPathDetails.cs" />
     <Compile Include="Utilities\HashUtils.cs" />
     <Compile Include="Utilities\IHashUtils.cs" />
     <Page Include="MainWindow.xaml">

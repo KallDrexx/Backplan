@@ -9,6 +9,7 @@ namespace Backplan.Client.Database
 {
     public interface ITrackedFileStore
     {
-        IEnumerable<TrackedFileAction> GetTrackedFilesInPath(string path); 
+        IEnumerable<TrackedFile> GetTrackedFilesInPath(string path);
+        void AddFileActionToTrackedFile(TrackedFile file, TrackedFileAction action);
     }
 }
