@@ -58,6 +58,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Database\ITrackedFileStore.cs" />
+    <Compile Include="IO\DirectoryCrawler.cs" />
     <Compile Include="Utilities\HashUtils.cs" />
     <Compile Include="Utilities\IHashUtils.cs" />
     <Page Include="MainWindow.xaml">
@@ -68,9 +70,9 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Data\FileActions.cs" />
-    <Compile Include="Data\TrackedFile.cs" />
-    <Compile Include="Data\TrackedFileAction.cs" />
+    <Compile Include="Models\FileActions.cs" />
+    <Compile Include="Models\TrackedFile.cs" />
+    <Compile Include="Models\TrackedFileAction.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -104,6 +106,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
