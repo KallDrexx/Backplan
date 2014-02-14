@@ -47,6 +47,7 @@ namespace Backplan.Client.IO
                         Path = fileInfo.DirectoryName,
                         FileName = fileInfo.Name,
                         FileLength = fileInfo.Length,
+                        FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc.DateTimeInstance,
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     };
 
