@@ -39,7 +39,7 @@ namespace Backplan.Client.IO
                 var fileInfo = _pathDetails.GetFileInfo(filePath);
 
                 // Check if the file was modified at all
-                if (lastAction.FileLength != fileInfo.Length)
+                if (FileWasModified(lastAction,fileInfo))
                 {
                     var newAction = new TrackedFileAction
                     {
@@ -61,6 +61,17 @@ namespace Backplan.Client.IO
                 if (_pathDetails.IsDirectory(filename))
                     CrawlDirectory(filename);
             }
+        }
+
+        private bool FileWasModified(TrackedFileAction lastAction, IFileInfoWrap fileInfo)
+        {
+            if (lastAction.FileLength != fileInfo.Length)
+                return true;
+
+            if (lastAction.FileLastModifiedDateUtc < fileInfo.LastWriteTimeUtc.DateTimeInstance)
+                return true;
+
+            return false;
         }
     }
 }
