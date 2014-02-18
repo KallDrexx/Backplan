@@ -28,7 +28,10 @@ namespace Backplan.Client.IO
 
         private void CrawlDirectory(string path)
         {
+            IEnumerable<string> filesInDirectory = _pathDetails.GetFilesInPath(path);
             var trackedFiles = _trackedFileStore.GetTrackedFilesInPath(path) ?? new TrackedFile[0];
+            var processedTrackedFileNames = new List<string>();
+
             foreach (var trackedFile in trackedFiles)
             {
                 var lastAction = trackedFile.Actions
@@ -37,6 +40,7 @@ namespace Backplan.Client.IO
 
                 var filePath = Path.Combine(lastAction.Path, lastAction.FileName);
                 var fileInfo = _pathDetails.GetFileInfo(filePath);
+                processedTrackedFileNames.Add(lastAction.FileName);
 
                 // Check if the file was modified at all
                 if (FileWasModified(lastAction,fileInfo))
@@ -55,11 +59,32 @@ namespace Backplan.Client.IO
                 }
             }
 
-            var filesInDirectory = _pathDetails.GetFilesInPath(path);
             foreach (var filename in filesInDirectory)
             {
                 if (_pathDetails.IsDirectory(filename))
-                    CrawlDirectory(filename);
+                { 
+                    CrawlDirectory(filename); 
+                }
+                else
+                {
+                    // Check if this is a new, non-tracked file
+                    if (!processedTrackedFileNames.Any(x => x.Equals(filename, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var filePath = Path.Combine(path, filename);
+                        var fileInfo = _pathDetails.GetFileInfo(filePath);
+                        var action = new TrackedFileAction
+                        {
+                            Action = FileActions.Added,
+                            Path = fileInfo.DirectoryName,
+                            FileName = fileInfo.Name,
+                            FileLength = fileInfo.Length,
+                            FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc.DateTimeInstance,
+                            EffectiveDateUtc = DateTime.Now.ToUniversalTime()
+                        };
+
+                        _trackedFileStore.AddFileActionToTrackedFile(null, action);
+                    }
+                }
             }
         }
 

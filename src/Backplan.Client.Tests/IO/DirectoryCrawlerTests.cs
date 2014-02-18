@@ -152,7 +152,7 @@ namespace Backplan.Client.Tests.IO
         }
 
         [TestMethod]
-        public void Action_Added_when_File_Modified_Date_Is_Newer()
+        public void Action_Added_When_File_Modified_Date_Is_Newer()
         {
             var instance = _mocker.Create<DirectoryCrawler>();
 
@@ -199,6 +199,45 @@ namespace Backplan.Client.Tests.IO
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(trackedFile, It.Is<TrackedFileAction>(y => y.FileLastModifiedDateUtc == writeTime.AddDays(1))),
+                            Times.Once);
+        }
+
+        [TestMethod]
+        public void Action_Added_When_File_Isnt_In_Tracked_List()
+        {
+            var instance = _mocker.Create<DirectoryCrawler>();
+
+            const string filePath = @"C:\Test";
+            const string fileName = "abc.def";
+            const int fileLength = 100;
+            DateTime writeTime = DateTime.Now.ToUniversalTime();
+
+            var fileInfoMock = new Mock<IFileInfoWrap>();
+            fileInfoMock.Setup(x => x.Length).Returns(fileLength);
+            fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime.AddDays(1)));
+            fileInfoMock.Setup(x => x.Name).Returns(fileName);
+            fileInfoMock.Setup(x => x.DirectoryName).Returns(filePath);
+
+            _mocker.GetMock<ITrackedFileStore>()
+                   .Setup(x => x.GetTrackedFilesInPath(filePath))
+                   .Returns(new TrackedFile[] {});
+
+            _mocker.GetMock<IPathDetails>()
+                   .Setup(x => x.GetFileInfo(Path.Combine(filePath, fileName)))
+                   .Returns(fileInfoMock.Object);
+
+            _mocker.GetMock<IPathDetails>()
+                   .Setup(x => x.GetFilesInPath(filePath))
+                   .Returns(new string[] { fileName });
+
+            instance.CheckDirectoryContents(filePath);
+
+            _mocker.GetMock<ITrackedFileStore>()
+                   .Verify(x => x.AddFileActionToTrackedFile(null, It.Is<TrackedFileAction>(y => y.Action == FileActions.Added)),
+                            Times.Once);
+
+            _mocker.GetMock<ITrackedFileStore>()
+                   .Verify(x => x.AddFileActionToTrackedFile(null, It.Is<TrackedFileAction>(y => y.FileLastModifiedDateUtc == writeTime.AddDays(1))),
                             Times.Once);
         }
     }
