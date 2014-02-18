@@ -1,4 +1,5 @@
-﻿using Backplan.Client.Database;
+﻿using SystemInterface.IO;
+using Backplan.Client.Database;
 using Backplan.Client.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -80,7 +81,7 @@ namespace Backplan.Client.Tests.IO
                 }
             };
 
-            var fileInfoMock = new Mock<IFileInfoWrap>();
+            var fileInfoMock = new Mock<IFileInfo>();
             fileInfoMock.Setup(x => x.Length).Returns(fileLength);
             fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime));
             fileInfoMock.Setup(x => x.Name).Returns(fileName);
@@ -127,7 +128,7 @@ namespace Backplan.Client.Tests.IO
                 }
             };
 
-            var fileInfoMock = new Mock<IFileInfoWrap>();
+            var fileInfoMock = new Mock<IFileInfo>();
             fileInfoMock.Setup(x => x.Length).Returns(fileLength + 1);
             fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime));
             fileInfoMock.Setup(x => x.Name).Returns(fileName);
@@ -179,7 +180,7 @@ namespace Backplan.Client.Tests.IO
                 }
             };
 
-            var fileInfoMock = new Mock<IFileInfoWrap>();
+            var fileInfoMock = new Mock<IFileInfo>();
             fileInfoMock.Setup(x => x.Length).Returns(fileLength);
             fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime.AddDays(1)));
             fileInfoMock.Setup(x => x.Name).Returns(fileName);
@@ -215,7 +216,7 @@ namespace Backplan.Client.Tests.IO
             const int fileLength = 100;
             DateTime writeTime = DateTime.Now.ToUniversalTime();
 
-            var fileInfoMock = new Mock<IFileInfoWrap>();
+            var fileInfoMock = new Mock<IFileInfo>();
             fileInfoMock.Setup(x => x.Length).Returns(fileLength);
             fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime.AddDays(1)));
             fileInfoMock.Setup(x => x.Name).Returns(fileName);
@@ -271,7 +272,7 @@ namespace Backplan.Client.Tests.IO
                 }
             };
 
-            var fileInfoMock = new Mock<IFileInfoWrap>();
+            var fileInfoMock = new Mock<IFileInfo>();
             fileInfoMock.Setup(x => x.Exists).Returns(false);
 
             _mocker.GetMock<ITrackedFileStore>()

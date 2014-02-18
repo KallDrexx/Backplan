@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SystemInterface.IO;
 using SystemWrapper.IO;
 
 namespace Backplan.Client.IO
@@ -12,6 +13,6 @@ namespace Backplan.Client.IO
     {
         IEnumerable<string> GetFilesInPath(string path);
         bool IsDirectory(string path);
-        IFileInfoWrap GetFileInfo(string path);
+        IFileInfo GetFileInfo(string path);
     }
 }

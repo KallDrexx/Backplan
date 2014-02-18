@@ -1,4 +1,5 @@
-﻿using Backplan.Client.Database;
+﻿using SystemInterface.IO;
+using Backplan.Client.Database;
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -102,7 +103,7 @@ namespace Backplan.Client.IO
             }
         }
 
-        private bool FileWasModified(TrackedFileAction lastAction, IFileInfoWrap fileInfo)
+        private bool FileWasModified(TrackedFileAction lastAction, IFileInfo fileInfo)
         {
             if (lastAction.FileLength != fileInfo.Length)
                 return true;
