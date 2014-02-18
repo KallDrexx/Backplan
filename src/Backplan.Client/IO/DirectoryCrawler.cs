@@ -43,7 +43,21 @@ namespace Backplan.Client.IO
                 processedTrackedFileNames.Add(lastAction.FileName);
 
                 // Check if the file was modified at all
-                if (FileWasModified(lastAction,fileInfo))
+                if (!fileInfo.Exists)
+                {
+                    var newAction = new TrackedFileAction
+                    {
+                        Action = FileActions.Deleted,
+                        Path = path,
+                        FileName = lastAction.FileName,
+                        FileLength = 0,
+                        EffectiveDateUtc = DateTime.Now.ToUniversalTime(),
+                        FileLastModifiedDateUtc = DateTime.Now.ToUniversalTime()
+                    };
+
+                    _trackedFileStore.AddFileActionToTrackedFile(trackedFile, newAction);
+                }
+                else if (FileWasModified(lastAction,fileInfo))
                 {
                     var newAction = new TrackedFileAction
                     {
