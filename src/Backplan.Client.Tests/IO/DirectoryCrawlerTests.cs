@@ -1,5 +1,4 @@
-﻿using SystemInterface.IO;
-using Backplan.Client.Database;
+﻿using Backplan.Client.Database;
 using Backplan.Client.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -8,47 +7,55 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SystemWrapper.IO;
 using Backplan.Client.Models;
-using SystemWrapper;
 using AutoMoq;
 using Moq;
+using System.IO.Abstractions;
+using System.IO.Abstractions.TestingHelpers;
 
 namespace Backplan.Client.Tests.IO
 {
     [TestClass]
     public class DirectoryCrawlerTests
     {
+        private const string BaseDirectory = @"C:\Test";
+
         private AutoMoqer _mocker;
+        private MockFileSystem _fileSystem;
 
         [TestInitialize]
         public void Setup()
         {
             _mocker = new AutoMoqer();
+
+            _fileSystem = new MockFileSystem();
+            _fileSystem.AddDirectory(BaseDirectory);
+            _mocker.SetInstance<IFileSystem>(_fileSystem);
         }
 
         [TestMethod]
         public void Requests_Tracked_Files_In_Path()
         {
+            _fileSystem.AddDirectory(BaseDirectory);
+
             var instance = _mocker.Create<DirectoryCrawler>();
-            instance.CheckDirectoryContents("C:\\Test");
+            instance.CheckDirectoryContents(BaseDirectory);
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Verify(x => x.GetTrackedFilesInPath(@"C:\Test"), Times.Once);
+                   .Verify(x => x.GetTrackedFilesInPath(BaseDirectory), Times.Once);
         }
 
         [TestMethod]
         public void Requests_Tracked_Files_In_Subfolder()
         {
+            const string subFolder = @"C:\Test\Directory";
+
+            _fileSystem.AddFile(subFolder, new MockFileData(new byte[0])
+            {
+                Attributes = FileAttributes.Directory
+            });
+
             var instance = _mocker.Create<DirectoryCrawler>();
-            _mocker.GetMock<IPathDetails>()
-                   .Setup(x => x.GetFilesInPath(@"C:\Test"))
-                   .Returns(new string[] { @"C:\Test\Directory" });
-
-            _mocker.GetMock<IPathDetails>()
-                   .Setup(x => x.IsDirectory(@"C:\Test\Directory"))
-                   .Returns(true);
-
             instance.CheckDirectoryContents("C:\\Test");
 
             _mocker.GetMock<ITrackedFileStore>()
@@ -58,44 +65,35 @@ namespace Backplan.Client.Tests.IO
         [TestMethod]
         public void No_Action_Added_When_Existing_File_Not_Changed()
         {
-            var instance = _mocker.Create<DirectoryCrawler>();
-
-            const string filePath = @"C:\Test";
-            const string fileName = "abc.def";
-            const int fileLength = 100;
             DateTime writeTime = DateTime.Now.ToUniversalTime();
+            var filePath = Path.Combine(BaseDirectory, "abc.def");
+            var content = new byte[] {1, 1, 1};
+            _fileSystem.AddFile(filePath,new MockFileData(content)
+            {
+                LastWriteTime = writeTime
+            });
 
+            var instance = _mocker.Create<DirectoryCrawler>();
             var trackedFile = new TrackedFile
             {
                 Actions = new[] 
                 {
                     new TrackedFileAction 
                     {
-                        Path = filePath,
-                        FileName = fileName,
+                        Path = BaseDirectory,
+                        FileName = Path.GetFileName(filePath),
                         Action = FileActions.Added,
-                        FileLength = fileLength,
+                        FileLength = content.Length,
                         FileLastModifiedDateUtc = writeTime,
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     }
                 }
             };
 
-            var fileInfoMock = new Mock<IFileInfo>();
-            fileInfoMock.Setup(x => x.Length).Returns(fileLength);
-            fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime));
-            fileInfoMock.Setup(x => x.Name).Returns(fileName);
-            fileInfoMock.Setup(x => x.DirectoryName).Returns(filePath);
-            fileInfoMock.Setup(x => x.Exists).Returns(true);
-
             _mocker.GetMock<ITrackedFileStore>()
                    .Setup(x => x.GetTrackedFilesInPath(filePath))
                    .Returns(new[] { trackedFile });
 
-            _mocker.GetMock<IPathDetails>()
-                   .Setup(x => x.GetFileInfo(Path.Combine(filePath, fileName)))
-                   .Returns(fileInfoMock.Object);
-            
             instance.CheckDirectoryContents(filePath);
 
             _mocker.GetMock<ITrackedFileStore>()
@@ -105,12 +103,15 @@ namespace Backplan.Client.Tests.IO
         [TestMethod]
         public void Action_Added_When_File_Size_Doesnt_Match()
         {
-            var instance = _mocker.Create<DirectoryCrawler>();
-
-            const string filePath = @"C:\Test";
-            const string fileName = "abc.def";
-            const int fileLength = 100;
             DateTime writeTime = DateTime.Now.ToUniversalTime();
+            var filePath = Path.Combine(BaseDirectory, "abc.def");
+            var content = new byte[] { 1, 1, 1 };
+            _fileSystem.AddFile(filePath, new MockFileData(content)
+            {
+                LastWriteTime = writeTime
+            });
+
+            var instance = _mocker.Create<DirectoryCrawler>();
 
             var trackedFile = new TrackedFile
             {
@@ -118,30 +119,19 @@ namespace Backplan.Client.Tests.IO
                 {
                     new TrackedFileAction 
                     {
-                        Path = filePath,
-                        FileName = fileName,
+                        Path = BaseDirectory,
+                        FileName = Path.GetFileName(filePath),
                         Action = FileActions.Added,
-                        FileLength = fileLength,
+                        FileLength = content.Length - 1,
                         FileLastModifiedDateUtc = writeTime,
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     }
                 }
             };
 
-            var fileInfoMock = new Mock<IFileInfo>();
-            fileInfoMock.Setup(x => x.Length).Returns(fileLength + 1);
-            fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime));
-            fileInfoMock.Setup(x => x.Name).Returns(fileName);
-            fileInfoMock.Setup(x => x.DirectoryName).Returns(filePath);
-            fileInfoMock.Setup(x => x.Exists).Returns(true);
-
             _mocker.GetMock<ITrackedFileStore>()
                    .Setup(x => x.GetTrackedFilesInPath(filePath))
                    .Returns(new[] { trackedFile });
-
-            _mocker.GetMock<IPathDetails>()
-                   .Setup(x => x.GetFileInfo(Path.Combine(filePath, fileName)))
-                   .Returns(fileInfoMock.Object);
 
             instance.CheckDirectoryContents(filePath);
 
@@ -150,19 +140,22 @@ namespace Backplan.Client.Tests.IO
                             Times.Once);
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Verify(x => x.AddFileActionToTrackedFile(trackedFile, It.Is<TrackedFileAction>(y => y.FileLength == fileLength + 1)),
+                   .Verify(x => x.AddFileActionToTrackedFile(trackedFile, It.Is<TrackedFileAction>(y => y.FileLength == content.Length)),
                             Times.Once);
         }
 
         [TestMethod]
         public void Action_Added_When_File_Modified_Date_Is_Newer()
         {
-            var instance = _mocker.Create<DirectoryCrawler>();
-
-            const string filePath = @"C:\Test";
-            const string fileName = "abc.def";
-            const int fileLength = 100;
             DateTime writeTime = DateTime.Now.ToUniversalTime();
+            var filePath = Path.Combine(BaseDirectory, "abc.def");
+            var content = new byte[] { 1, 1, 1 };
+            _fileSystem.AddFile(filePath, new MockFileData(content)
+            {
+                LastWriteTime = writeTime
+            });
+
+            var instance = _mocker.Create<DirectoryCrawler>();
 
             var trackedFile = new TrackedFile
             {
@@ -170,30 +163,19 @@ namespace Backplan.Client.Tests.IO
                 {
                     new TrackedFileAction 
                     {
-                        Path = filePath,
-                        FileName = fileName,
+                        Path = BaseDirectory,
+                        FileName = Path.GetFileName(filePath),
                         Action = FileActions.Added,
-                        FileLength = fileLength,
-                        FileLastModifiedDateUtc = writeTime,
+                        FileLength = content.Length,
+                        FileLastModifiedDateUtc = writeTime.AddDays(-1),
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     }
                 }
             };
 
-            var fileInfoMock = new Mock<IFileInfo>();
-            fileInfoMock.Setup(x => x.Length).Returns(fileLength);
-            fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime.AddDays(1)));
-            fileInfoMock.Setup(x => x.Name).Returns(fileName);
-            fileInfoMock.Setup(x => x.DirectoryName).Returns(filePath);
-            fileInfoMock.Setup(x => x.Exists).Returns(true);
-
             _mocker.GetMock<ITrackedFileStore>()
                    .Setup(x => x.GetTrackedFilesInPath(filePath))
                    .Returns(new[] { trackedFile });
-
-            _mocker.GetMock<IPathDetails>()
-                   .Setup(x => x.GetFileInfo(Path.Combine(filePath, fileName)))
-                   .Returns(fileInfoMock.Object);
 
             instance.CheckDirectoryContents(filePath);
 
@@ -202,59 +184,45 @@ namespace Backplan.Client.Tests.IO
                             Times.Once);
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Verify(x => x.AddFileActionToTrackedFile(trackedFile, It.Is<TrackedFileAction>(y => y.FileLastModifiedDateUtc == writeTime.AddDays(1))),
+                   .Verify(x => x.AddFileActionToTrackedFile(trackedFile, It.Is<TrackedFileAction>(y => y.FileLastModifiedDateUtc == writeTime)),
                             Times.Once);
         }
 
         [TestMethod]
         public void Action_Added_When_File_Isnt_In_Tracked_List()
         {
-            var instance = _mocker.Create<DirectoryCrawler>();
-
-            const string filePath = @"C:\Test";
-            const string fileName = "abc.def";
-            const int fileLength = 100;
             DateTime writeTime = DateTime.Now.ToUniversalTime();
+            var filePath = Path.Combine(BaseDirectory, "abc.def");
+            var content = new byte[] { 1, 1, 1 };
+            _fileSystem.AddFile(filePath, new MockFileData(content)
+            {
+                LastWriteTime = writeTime
+            });
 
-            var fileInfoMock = new Mock<IFileInfo>();
-            fileInfoMock.Setup(x => x.Length).Returns(fileLength);
-            fileInfoMock.Setup(x => x.LastWriteTimeUtc).Returns(new DateTimeWrap(writeTime.AddDays(1)));
-            fileInfoMock.Setup(x => x.Name).Returns(fileName);
-            fileInfoMock.Setup(x => x.DirectoryName).Returns(filePath);
-            fileInfoMock.Setup(x => x.Exists).Returns(true);
+            var instance = _mocker.Create<DirectoryCrawler>();
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Setup(x => x.GetTrackedFilesInPath(filePath))
-                   .Returns(new TrackedFile[] {});
+                   .Returns(new TrackedFile[] { });
 
-            _mocker.GetMock<IPathDetails>()
-                   .Setup(x => x.GetFileInfo(Path.Combine(filePath, fileName)))
-                   .Returns(fileInfoMock.Object);
-
-            _mocker.GetMock<IPathDetails>()
-                   .Setup(x => x.GetFilesInPath(filePath))
-                   .Returns(new string[] { fileName });
-
-            instance.CheckDirectoryContents(filePath);
+            instance.CheckDirectoryContents(BaseDirectory);
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(null, It.Is<TrackedFileAction>(y => y.Action == FileActions.Added)),
                             Times.Once);
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Verify(x => x.AddFileActionToTrackedFile(null, It.Is<TrackedFileAction>(y => y.FileLastModifiedDateUtc == writeTime.AddDays(1))),
+                   .Verify(x => x.AddFileActionToTrackedFile(null, It.Is<TrackedFileAction>(y => y.FileLastModifiedDateUtc == writeTime)),
                             Times.Once);
         }
 
         [TestMethod]
         public void Action_Added_when_Tracked_File_Isnt_Found()
         {
-            var instance = _mocker.Create<DirectoryCrawler>();
-
-            const string filePath = @"C:\Test";
-            const string fileName = "abc.def";
-            const int fileLength = 100;
             DateTime writeTime = DateTime.Now.ToUniversalTime();
+            var filePath = Path.Combine(BaseDirectory, "abc.def");
+            var content = new byte[] { 1, 1, 1 };
+            var instance = _mocker.Create<DirectoryCrawler>();
 
             var trackedFile = new TrackedFile
             {
@@ -262,26 +230,19 @@ namespace Backplan.Client.Tests.IO
                 {
                     new TrackedFileAction 
                     {
-                        Path = filePath,
-                        FileName = fileName,
+                        Path = BaseDirectory,
+                        FileName = Path.GetFileName(filePath),
                         Action = FileActions.Added,
-                        FileLength = fileLength,
+                        FileLength = content.Length,
                         FileLastModifiedDateUtc = writeTime,
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     }
                 }
             };
 
-            var fileInfoMock = new Mock<IFileInfo>();
-            fileInfoMock.Setup(x => x.Exists).Returns(false);
-
             _mocker.GetMock<ITrackedFileStore>()
                    .Setup(x => x.GetTrackedFilesInPath(filePath))
                    .Returns(new[] { trackedFile });
-
-            _mocker.GetMock<IPathDetails>()
-                   .Setup(x => x.GetFileInfo(Path.Combine(filePath, fileName)))
-                   .Returns(fileInfoMock.Object);
 
             instance.CheckDirectoryContents(filePath);
 

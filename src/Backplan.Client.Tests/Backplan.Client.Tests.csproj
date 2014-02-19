@@ -62,12 +62,11 @@
       <HintPath>..\packages\Moq.4.2.1312.1622\lib\net40\Moq.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="SystemInterface">
-      <HintPath>..\packages\SystemWrapper-sn.0.5.3\lib\net40\SystemInterface.dll</HintPath>
+    <Reference Include="System.IO.Abstractions">
+      <HintPath>..\packages\System.IO.Abstractions.1.4.0.74\lib\net35\System.IO.Abstractions.dll</HintPath>
     </Reference>
-    <Reference Include="SystemWrapper, Version=0.5.0.0, Culture=neutral, PublicKeyToken=9861416082383a00, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SystemWrapper-sn.0.5.3\lib\net40\SystemWrapper.dll</HintPath>
+    <Reference Include="System.IO.Abstractions.TestingHelpers">
+      <HintPath>..\packages\System.IO.Abstractions.TestingHelpers.1.4.0.74\lib\net35\System.IO.Abstractions.TestingHelpers.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Choose>

@@ -1,4 +1,4 @@
-﻿using SystemInterface.IO;
+﻿using System.IO.Abstractions;
 using Backplan.Client.Database;
 using System;
 using System.IO;
@@ -6,19 +6,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SystemWrapper.IO;
 using Backplan.Client.Models;
 
 namespace Backplan.Client.IO
 {
     public class DirectoryCrawler
     {
-        private IPathDetails _pathDetails;
-        private ITrackedFileStore _trackedFileStore;
+        private readonly IFileSystem _fileSystem;
+        private readonly ITrackedFileStore _trackedFileStore;
 
-        public DirectoryCrawler(ITrackedFileStore trackedFileStore, IPathDetails pathDetails)
+        public DirectoryCrawler(ITrackedFileStore trackedFileStore, IFileSystem fileSystem)
         {
-            _pathDetails = pathDetails;
+            _fileSystem = fileSystem;
             _trackedFileStore = trackedFileStore;
         }
 
@@ -29,7 +28,7 @@ namespace Backplan.Client.IO
 
         private void CrawlDirectory(string path)
         {
-            IEnumerable<string> filesInDirectory = _pathDetails.GetFilesInPath(path);
+            IEnumerable<string> filesInDirectory = _fileSystem.Directory.GetFiles(path);
             var trackedFiles = _trackedFileStore.GetTrackedFilesInPath(path) ?? new TrackedFile[0];
             var processedTrackedFileNames = new List<string>();
 
@@ -40,7 +39,7 @@ namespace Backplan.Client.IO
                                             .First();
 
                 var filePath = Path.Combine(lastAction.Path, lastAction.FileName);
-                var fileInfo = _pathDetails.GetFileInfo(filePath);
+                var fileInfo = _fileSystem.FileInfo.FromFileName(filePath);
                 processedTrackedFileNames.Add(lastAction.FileName);
 
                 // Check if the file was modified at all
@@ -66,7 +65,7 @@ namespace Backplan.Client.IO
                         Path = fileInfo.DirectoryName,
                         FileName = fileInfo.Name,
                         FileLength = fileInfo.Length,
-                        FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc.DateTimeInstance,
+                        FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc,
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     };
 
@@ -76,7 +75,10 @@ namespace Backplan.Client.IO
 
             foreach (var filename in filesInDirectory)
             {
-                if (_pathDetails.IsDirectory(filename))
+                var filePath = Path.Combine(path, filename);
+                var fileInfo = _fileSystem.FileInfo.FromFileName(filePath);
+
+                if (IsDirectory(fileInfo))
                 { 
                     CrawlDirectory(filename); 
                 }
@@ -85,15 +87,13 @@ namespace Backplan.Client.IO
                     // Check if this is a new, non-tracked file
                     if (!processedTrackedFileNames.Any(x => x.Equals(filename, StringComparison.OrdinalIgnoreCase)))
                     {
-                        var filePath = Path.Combine(path, filename);
-                        var fileInfo = _pathDetails.GetFileInfo(filePath);
                         var action = new TrackedFileAction
                         {
                             Action = FileActions.Added,
                             Path = fileInfo.DirectoryName,
                             FileName = fileInfo.Name,
                             FileLength = fileInfo.Length,
-                            FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc.DateTimeInstance,
+                            FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc,
                             EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                         };
 
@@ -103,15 +103,21 @@ namespace Backplan.Client.IO
             }
         }
 
-        private bool FileWasModified(TrackedFileAction lastAction, IFileInfo fileInfo)
+        private bool FileWasModified(TrackedFileAction lastAction, FileInfoBase fileInfo)
         {
             if (lastAction.FileLength != fileInfo.Length)
                 return true;
 
-            if (lastAction.FileLastModifiedDateUtc < fileInfo.LastWriteTimeUtc.DateTimeInstance)
+            if (lastAction.FileLastModifiedDateUtc < fileInfo.LastWriteTimeUtc)
                 return true;
 
             return false;
+        }
+
+        private bool IsDirectory(FileInfoBase fileInfo)
+        {
+            FileAttributes attributes = fileInfo.Attributes;
+            return ((attributes & FileAttributes.Directory) == FileAttributes.Directory);
         }
     }
 }

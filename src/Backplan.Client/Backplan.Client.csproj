@@ -38,6 +38,9 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.IO.Abstractions">
+      <HintPath>..\packages\System.IO.Abstractions.1.4.0.74\lib\net35\System.IO.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -45,13 +48,6 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="SystemInterface">
-      <HintPath>..\packages\SystemWrapper-sn.0.5.3\lib\net40\SystemInterface.dll</HintPath>
-    </Reference>
-    <Reference Include="SystemWrapper, Version=0.5.0.0, Culture=neutral, PublicKeyToken=9861416082383a00, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SystemWrapper-sn.0.5.3\lib\net40\SystemWrapper.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
@@ -64,7 +60,6 @@
     </ApplicationDefinition>
     <Compile Include="Database\ITrackedFileStore.cs" />
     <Compile Include="IO\DirectoryCrawler.cs" />
-    <Compile Include="IO\IPathDetails.cs" />
     <Compile Include="Utilities\HashUtils.cs" />
     <Compile Include="Utilities\IHashUtils.cs" />
     <Page Include="MainWindow.xaml">
