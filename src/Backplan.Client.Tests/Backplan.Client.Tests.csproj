@@ -84,7 +84,6 @@
   <ItemGroup>
     <Compile Include="IO\DirectoryCrawlerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utilities\HashUtilitiesTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backplan.Client\Backplan.Client.csproj">

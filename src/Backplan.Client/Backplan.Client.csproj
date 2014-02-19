@@ -60,8 +60,6 @@
     </ApplicationDefinition>
     <Compile Include="Database\ITrackedFileStore.cs" />
     <Compile Include="IO\DirectoryCrawler.cs" />
-    <Compile Include="Utilities\HashUtils.cs" />
-    <Compile Include="Utilities\IHashUtils.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
