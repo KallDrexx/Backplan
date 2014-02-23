@@ -1,6 +1,8 @@
-﻿using System.IO.Abstractions;
+﻿using System.IO;
+using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using Backplan.Client.IO;
+using Backplan.Client.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -9,49 +11,102 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMoq;
 using Moq;
+using Backplan.Client.Database;
 
 namespace Backplan.Client.Tests.IO
 {
     [TestClass]
     public class DirectoryWatcherTests
     {
+        private const string Path = @"C:\test";
+        private const string FileName = "abc.def";
+
         private AutoMoqer _mocker;
         private DirectoryWatcher _instance;
+        private int _expectedFileLength;
+        private DateTime _expectedWriteDate;
 
         [TestInitialize]
         public void Setup()
         {
             _mocker = new AutoMoqer();
+
+            var mockFileSystem = new MockFileSystem();
+            _mocker.SetInstance<IFileSystem>(mockFileSystem);
             
             // GetMock of the abstract class before create to prevent automoq bugs
             _mocker.GetMock<FileSystemWatcherBase>();
 
             _instance = _mocker.Create<DirectoryWatcher>();
+
+            // Mocked files
+            var content = new byte[] {1, 1, 1};
+            _expectedFileLength = content.Length;
+            _expectedWriteDate = DateTime.Now.ToUniversalTime();
+
+            var nameWithPath = mockFileSystem.Path.Combine(Path, FileName);
+            mockFileSystem.AddFile(nameWithPath, new MockFileData(content)
+            {
+                LastWriteTime = _expectedWriteDate
+            });
+
+            
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
-        public void Throws_Exception_If_Begin_Called_With_Null_Path()
+        public void Throws_Exception_If_Start_Called_With_Null_Path()
         {
-            _instance.Begin(null);
+            _instance.Start(null);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
-        public void Throws_Exception_If_Begin_Called_With_Empty_Path()
+        public void Throws_Exception_If_Start_Called_With_Empty_Path()
         {
-            _instance.Begin("");
+            _instance.Start("");
         }
 
         [TestMethod]
-        public void Watcher_Gets_Path_Set_Same_As_Begin_Path_Parameter()
+        public void Watcher_Gets_Path_Set_Same_As_Start_Path_Parameter()
         {
-            const string path = @"C:\test";
-            _mocker.GetMock<FileSystemWatcherBase>().SetupAllProperties();
-            _instance.Begin(path);
+            _instance.Start(Path);
 
             _mocker.GetMock<FileSystemWatcherBase>()
-                   .VerifySet(x => x.Path = path);
+                   .VerifySet(x => x.Path = Path);
+        }
+
+        [TestMethod]
+        public void Watcher_Is_Enabled_From_Start_Method()
+        {
+            _instance.Start(Path);
+
+            _mocker.GetMock<FileSystemWatcherBase>()
+                   .VerifySet(x => x.EnableRaisingEvents = true);
+        }
+
+        [TestMethod]
+        public void Watcher_Disabled_When_Disposed()
+        {
+            _instance.Dispose();
+
+            _mocker.GetMock<FileSystemWatcherBase>()
+                   .VerifySet(x => x.EnableRaisingEvents = false);
+        }
+
+        [TestMethod]
+        public void Tracked_File_Action_Added_When_File_Created()
+        {
+            _instance.Start(Path);
+            _mocker.GetMock<FileSystemWatcherBase>()
+                   .Raise(x => x.Created += null, new FileSystemEventArgs(WatcherChangeTypes.Created, Path, FileName));
+
+            _mocker.GetMock<ITrackedFileStore>()
+                   .Verify(x => x.AddFileActionToTrackedFile(null, It.Is<TrackedFileAction>(y => y.Action == FileActions.Added &&
+                                                                                                 y.FileName == FileName &&
+                                                                                                 y.Path == Path &&
+                                                                                                 y.FileLength == _expectedFileLength &&
+                                                                                                 y.FileLastModifiedDateUtc == _expectedWriteDate)));
         }
     }
 }

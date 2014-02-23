@@ -1,31 +1,60 @@
-﻿using Backplan.Client.Database;
+﻿using System.IO;
+using Backplan.Client.Database;
 using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Backplan.Client.Models;
 
 namespace Backplan.Client.IO
 {
     /// <summary>
     /// Watches a directory and notifies the tracked file store of changes
     /// </summary>
-    public class DirectoryWatcher
+    public class DirectoryWatcher : IDisposable
     {
         private readonly FileSystemWatcherBase _fileSystemWatcher;
+        private readonly ITrackedFileStore _trackedFileStore;
+        private readonly IFileSystem _fileSystem;
 
-        public DirectoryWatcher(FileSystemWatcherBase fileSystemWatcher)
+        public DirectoryWatcher(FileSystemWatcherBase fileSystemWatcher, ITrackedFileStore trackedFileStore, IFileSystem fileSystem)
         {
             _fileSystemWatcher = fileSystemWatcher;
+            _trackedFileStore = trackedFileStore;
+            _fileSystem = fileSystem;
         }
 
-        public void Begin(string path)
+        public void Start(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentException("FileSystemWatcher passed in without a valid path already set");
 
             _fileSystemWatcher.Path = path;
+            _fileSystemWatcher.Created += FileSystemWatcherOnCreatedOrChanged;
+
+            _fileSystemWatcher.EnableRaisingEvents = true;
+        }
+
+        private void FileSystemWatcherOnCreatedOrChanged(object sender, FileSystemEventArgs fileSystemEventArgs)
+        {
+            var fileInfo = _fileSystem.FileInfo.FromFileName(fileSystemEventArgs.FullPath);
+
+            _trackedFileStore.AddFileActionToTrackedFile(null, new TrackedFileAction
+            {
+                Path = fileInfo.DirectoryName,
+                FileName = fileInfo.Name,
+                Action = FileActions.Added,
+                EffectiveDateUtc = DateTime.Now.ToUniversalTime(),
+                FileLength = fileInfo.Length,
+                FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc
+            });
+        }
+
+        public void Dispose()
+        {
+            _fileSystemWatcher.EnableRaisingEvents = false;
         }
     }
 }
