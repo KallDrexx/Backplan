@@ -34,6 +34,7 @@ namespace Backplan.Client.IO
             _fileSystemWatcher.Path = path;
             _fileSystemWatcher.Created += FileSystemWatcherOnCreatedOrChanged;
             _fileSystemWatcher.Changed += FileSystemWatcherOnCreatedOrChanged;
+            _fileSystemWatcher.Deleted += FileSystemWatcherOnCreatedOrChanged;
 
             _fileSystemWatcher.EnableRaisingEvents = true;
         }
@@ -52,6 +53,11 @@ namespace Backplan.Client.IO
 
                 case WatcherChangeTypes.Changed:
                     action = FileActions.Modified;
+                    trackedFile = _trackedFileStore.GetTrackedFileByFullPath(fileSystemEventArgs.FullPath);
+                    break;
+
+                case WatcherChangeTypes.Deleted:
+                    action = FileActions.Deleted;
                     trackedFile = _trackedFileStore.GetTrackedFileByFullPath(fileSystemEventArgs.FullPath);
                     break;
 

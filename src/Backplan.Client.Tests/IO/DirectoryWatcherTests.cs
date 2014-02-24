@@ -121,7 +121,22 @@ namespace Backplan.Client.Tests.IO
                    .Raise(x => x.Changed += null, new FileSystemEventArgs(WatcherChangeTypes.Changed, Path, FileName));
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Verify(x => x.AddFileActionToTrackedFile(_trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Added &&
+                   .Verify(x => x.AddFileActionToTrackedFile(_trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Modified &&
+                                                                                                 y.FileName == FileName &&
+                                                                                                 y.Path == Path &&
+                                                                                                 y.FileLength == _expectedFileLength &&
+                                                                                                 y.FileLastModifiedDateUtc == _expectedWriteDate)));
+        }
+
+        [TestMethod]
+        public void Tracked_File_Action_Added_When_File_Deleted()
+        {
+            _instance.Start(Path);
+            _mocker.GetMock<FileSystemWatcherBase>()
+                   .Raise(x => x.Changed += null, new FileSystemEventArgs(WatcherChangeTypes.Deleted, Path, FileName));
+
+            _mocker.GetMock<ITrackedFileStore>()
+                   .Verify(x => x.AddFileActionToTrackedFile(_trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Deleted &&
                                                                                                  y.FileName == FileName &&
                                                                                                  y.Path == Path &&
                                                                                                  y.FileLength == _expectedFileLength &&
