@@ -11,5 +11,6 @@ namespace Backplan.Client.Database
     {
         IEnumerable<TrackedFile> GetTrackedFilesInPath(string path);
         void AddFileActionToTrackedFile(TrackedFile file, TrackedFileAction action);
+        TrackedFile GetTrackedFileByFullPath(string nameWithPath);
     }
 }

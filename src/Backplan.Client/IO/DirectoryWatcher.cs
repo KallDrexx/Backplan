@@ -41,24 +41,28 @@ namespace Backplan.Client.IO
         private void FileSystemWatcherOnCreatedOrChanged(object sender, FileSystemEventArgs fileSystemEventArgs)
         {
             FileActions action;
+            TrackedFile trackedFile;
+
             switch (fileSystemEventArgs.ChangeType)
             {
                 case WatcherChangeTypes.Created:
                     action = FileActions.Added;
+                    trackedFile = null;
                     break;
 
                 case WatcherChangeTypes.Changed:
                     action = FileActions.Modified;
+                    trackedFile = _trackedFileStore.GetTrackedFileByFullPath(fileSystemEventArgs.FullPath);
                     break;
 
                 default:
                     action = FileActions.None;
+                    trackedFile = null;
                     break;
             }
 
             var fileInfo = _fileSystem.FileInfo.FromFileName(fileSystemEventArgs.FullPath);
-
-            _trackedFileStore.AddFileActionToTrackedFile(null, new TrackedFileAction
+            _trackedFileStore.AddFileActionToTrackedFile(trackedFile, new TrackedFileAction
             {
                 Path = fileInfo.DirectoryName,
                 FileName = fileInfo.Name,
