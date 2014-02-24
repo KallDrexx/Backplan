@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.ComponentModel;
+using System.IO;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using Backplan.Client.IO;
@@ -133,11 +134,27 @@ namespace Backplan.Client.Tests.IO
         {
             _instance.Start(Path);
             _mocker.GetMock<FileSystemWatcherBase>()
-                   .Raise(x => x.Changed += null, new FileSystemEventArgs(WatcherChangeTypes.Deleted, Path, FileName));
+                   .Raise(x => x.Deleted += null, new FileSystemEventArgs(WatcherChangeTypes.Deleted, Path, FileName));
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(_trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Deleted &&
                                                                                                  y.FileName == FileName &&
+                                                                                                 y.Path == Path &&
+                                                                                                 y.FileLength == _expectedFileLength &&
+                                                                                                 y.FileLastModifiedDateUtc == _expectedWriteDate)));
+        }
+
+        [TestMethod]
+        public void Tracked_File_Action_Added_When_File_Renamed()
+        {
+            const string newName = "eee.def";
+            _instance.Start(Path);
+            _mocker.GetMock<FileSystemWatcherBase>()
+                   .Raise(x => x.Renamed += null, new RenamedEventArgs(WatcherChangeTypes.Renamed, Path, newName, FileName));
+
+            _mocker.GetMock<ITrackedFileStore>()
+                   .Verify(x => x.AddFileActionToTrackedFile(_trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Renamed &&
+                                                                                                 y.FileName == newName &&
                                                                                                  y.Path == Path &&
                                                                                                  y.FileLength == _expectedFileLength &&
                                                                                                  y.FileLastModifiedDateUtc == _expectedWriteDate)));

@@ -35,8 +35,24 @@ namespace Backplan.Client.IO
             _fileSystemWatcher.Created += FileSystemWatcherOnCreatedOrChanged;
             _fileSystemWatcher.Changed += FileSystemWatcherOnCreatedOrChanged;
             _fileSystemWatcher.Deleted += FileSystemWatcherOnCreatedOrChanged;
+            _fileSystemWatcher.Renamed += FileSystemWatcherOnRenamed;
 
             _fileSystemWatcher.EnableRaisingEvents = true;
+        }
+
+        private void FileSystemWatcherOnRenamed(object sender, RenamedEventArgs renamedEventArgs)
+        {
+            TrackedFile trackedFile = _trackedFileStore.GetTrackedFileByFullPath(renamedEventArgs.OldFullPath);
+            var fileInfo = _fileSystem.FileInfo.FromFileName(renamedEventArgs.FullPath);
+            _trackedFileStore.AddFileActionToTrackedFile(trackedFile, new TrackedFileAction
+            {
+                Path = fileInfo.DirectoryName,
+                FileName = fileInfo.Name,
+                Action = FileActions.Renamed,
+                EffectiveDateUtc = DateTime.Now.ToUniversalTime(),
+                FileLength = fileInfo.Length,
+                FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc
+            });
         }
 
         private void FileSystemWatcherOnCreatedOrChanged(object sender, FileSystemEventArgs fileSystemEventArgs)
