@@ -49,8 +49,6 @@ namespace Backplan.Client.Tests.IO
             {
                 LastWriteTime = _expectedWriteDate
             });
-
-            
         }
 
         [TestMethod]
@@ -100,6 +98,21 @@ namespace Backplan.Client.Tests.IO
             _instance.Start(Path);
             _mocker.GetMock<FileSystemWatcherBase>()
                    .Raise(x => x.Created += null, new FileSystemEventArgs(WatcherChangeTypes.Created, Path, FileName));
+
+            _mocker.GetMock<ITrackedFileStore>()
+                   .Verify(x => x.AddFileActionToTrackedFile(null, It.Is<TrackedFileAction>(y => y.Action == FileActions.Added &&
+                                                                                                 y.FileName == FileName &&
+                                                                                                 y.Path == Path &&
+                                                                                                 y.FileLength == _expectedFileLength &&
+                                                                                                 y.FileLastModifiedDateUtc == _expectedWriteDate)));
+        }
+
+        [TestMethod]
+        public void Tracked_File_Action_Added_When_File_Changed()
+        {
+            _instance.Start(Path);
+            _mocker.GetMock<FileSystemWatcherBase>()
+                   .Raise(x => x.Changed += null, new FileSystemEventArgs(WatcherChangeTypes.Changed, Path, FileName));
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(null, It.Is<TrackedFileAction>(y => y.Action == FileActions.Added &&

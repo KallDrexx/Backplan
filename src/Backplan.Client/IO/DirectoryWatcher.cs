@@ -33,19 +33,36 @@ namespace Backplan.Client.IO
 
             _fileSystemWatcher.Path = path;
             _fileSystemWatcher.Created += FileSystemWatcherOnCreatedOrChanged;
+            _fileSystemWatcher.Changed += FileSystemWatcherOnCreatedOrChanged;
 
             _fileSystemWatcher.EnableRaisingEvents = true;
         }
 
         private void FileSystemWatcherOnCreatedOrChanged(object sender, FileSystemEventArgs fileSystemEventArgs)
         {
+            FileActions action;
+            switch (fileSystemEventArgs.ChangeType)
+            {
+                case WatcherChangeTypes.Created:
+                    action = FileActions.Added;
+                    break;
+
+                case WatcherChangeTypes.Changed:
+                    action = FileActions.Modified;
+                    break;
+
+                default:
+                    action = FileActions.None;
+                    break;
+            }
+
             var fileInfo = _fileSystem.FileInfo.FromFileName(fileSystemEventArgs.FullPath);
 
             _trackedFileStore.AddFileActionToTrackedFile(null, new TrackedFileAction
             {
                 Path = fileInfo.DirectoryName,
                 FileName = fileInfo.Name,
-                Action = FileActions.Added,
+                Action = action,
                 EffectiveDateUtc = DateTime.Now.ToUniversalTime(),
                 FileLength = fileInfo.Length,
                 FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc
