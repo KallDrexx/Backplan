@@ -40,7 +40,7 @@ namespace Backplan.Client.IO
 
                 var filePath = Path.Combine(lastAction.Path, lastAction.FileName);
                 var fileInfo = _fileSystem.FileInfo.FromFileName(filePath);
-                processedTrackedFileNames.Add(lastAction.FileName);
+                processedTrackedFileNames.Add(filePath);
 
                 // Check if the file was modified at all
                 if (!fileInfo.Exists)

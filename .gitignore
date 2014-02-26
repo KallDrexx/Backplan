@@ -109,3 +109,5 @@ UpgradeLog*.XML
 
 # Custom
 !NuGet.exe
+!lib/*.dll
+!lib/*.pdb

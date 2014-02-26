@@ -147,14 +147,20 @@ namespace Backplan.Client.Tests.IO
         [TestMethod]
         public void Tracked_File_Action_Added_When_File_Renamed()
         {
-            const string newName = "eee.def";
+            const string oldName = "eee.def";
+            const string oldNameWithPath = @"C:\test\eee.def";
+
+            _mocker.GetMock<ITrackedFileStore>()
+                   .Setup(x => x.GetTrackedFileByFullPath(oldNameWithPath))
+                   .Returns(_trackedFile);
+
             _instance.Start(Path);
             _mocker.GetMock<FileSystemWatcherBase>()
-                   .Raise(x => x.Renamed += null, new RenamedEventArgs(WatcherChangeTypes.Renamed, Path, newName, FileName));
+                   .Raise(x => x.Renamed += null, new RenamedEventArgs(WatcherChangeTypes.Renamed, Path, FileName, oldName));
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(_trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Renamed &&
-                                                                                                 y.FileName == newName &&
+                                                                                                 y.FileName == FileName &&
                                                                                                  y.Path == Path &&
                                                                                                  y.FileLength == _expectedFileLength &&
                                                                                                  y.FileLastModifiedDateUtc == _expectedWriteDate)));

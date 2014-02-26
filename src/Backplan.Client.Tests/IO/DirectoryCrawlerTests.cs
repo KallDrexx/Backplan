@@ -28,6 +28,9 @@ namespace Backplan.Client.Tests.IO
         {
             _mocker = new AutoMoqer();
 
+            // GetMock of the abstract class before create to prevent automoq bugs
+            _mocker.GetMock<FileSystemWatcherBase>();
+
             _fileSystem = new MockFileSystem();
             _fileSystem.AddDirectory(BaseDirectory);
             _mocker.SetInstance<IFileSystem>(_fileSystem);
@@ -50,6 +53,7 @@ namespace Backplan.Client.Tests.IO
         {
             const string subFolder = @"C:\Test\Directory";
 
+            _fileSystem.AddDirectory(subFolder);
             _fileSystem.AddFile(subFolder, new MockFileData(new byte[0])
             {
                 Attributes = FileAttributes.Directory
@@ -91,10 +95,10 @@ namespace Backplan.Client.Tests.IO
             };
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Setup(x => x.GetTrackedFilesInPath(filePath))
+                   .Setup(x => x.GetTrackedFilesInPath(BaseDirectory))
                    .Returns(new[] { trackedFile });
 
-            instance.CheckDirectoryContents(filePath);
+            instance.CheckDirectoryContents(BaseDirectory);
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(It.IsAny<TrackedFile>(), It.IsAny<TrackedFileAction>()), Times.Never);
@@ -130,10 +134,10 @@ namespace Backplan.Client.Tests.IO
             };
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Setup(x => x.GetTrackedFilesInPath(filePath))
+                   .Setup(x => x.GetTrackedFilesInPath(BaseDirectory))
                    .Returns(new[] { trackedFile });
 
-            instance.CheckDirectoryContents(filePath);
+            instance.CheckDirectoryContents(BaseDirectory);
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Modified)),
@@ -174,10 +178,10 @@ namespace Backplan.Client.Tests.IO
             };
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Setup(x => x.GetTrackedFilesInPath(filePath))
+                   .Setup(x => x.GetTrackedFilesInPath(BaseDirectory))
                    .Returns(new[] { trackedFile });
 
-            instance.CheckDirectoryContents(filePath);
+            instance.CheckDirectoryContents(BaseDirectory);
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Modified)),
@@ -241,10 +245,10 @@ namespace Backplan.Client.Tests.IO
             };
 
             _mocker.GetMock<ITrackedFileStore>()
-                   .Setup(x => x.GetTrackedFilesInPath(filePath))
+                   .Setup(x => x.GetTrackedFilesInPath(BaseDirectory))
                    .Returns(new[] { trackedFile });
 
-            instance.CheckDirectoryContents(filePath);
+            instance.CheckDirectoryContents(BaseDirectory);
 
             _mocker.GetMock<ITrackedFileStore>()
                    .Verify(x => x.AddFileActionToTrackedFile(trackedFile, It.Is<TrackedFileAction>(y => y.Action == FileActions.Deleted)),
