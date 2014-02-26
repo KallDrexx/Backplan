@@ -54,10 +54,6 @@ namespace Backplan.Client.Tests.IO
             const string subFolder = @"C:\Test\Directory";
 
             _fileSystem.AddDirectory(subFolder);
-            _fileSystem.AddFile(subFolder, new MockFileData(new byte[0])
-            {
-                Attributes = FileAttributes.Directory
-            });
 
             var instance = _mocker.Create<DirectoryCrawler>();
             instance.CheckDirectoryContents("C:\\Test");

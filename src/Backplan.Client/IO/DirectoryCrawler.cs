@@ -29,6 +29,7 @@ namespace Backplan.Client.IO
         private void CrawlDirectory(string path)
         {
             IEnumerable<string> filesInDirectory = _fileSystem.Directory.GetFiles(path);
+            IEnumerable<string> subfolders = _fileSystem.Directory.GetDirectories(path);
             var trackedFiles = _trackedFileStore.GetTrackedFilesInPath(path) ?? new TrackedFile[0];
             var processedTrackedFileNames = new List<string>();
 
@@ -78,28 +79,26 @@ namespace Backplan.Client.IO
                 var filePath = Path.Combine(path, filename);
                 var fileInfo = _fileSystem.FileInfo.FromFileName(filePath);
 
-                if (IsDirectory(fileInfo))
-                { 
-                    CrawlDirectory(filename); 
-                }
-                else
+                // Check if this is a new, non-tracked file
+                if (!processedTrackedFileNames.Any(x => x.Equals(filename, StringComparison.OrdinalIgnoreCase)))
                 {
-                    // Check if this is a new, non-tracked file
-                    if (!processedTrackedFileNames.Any(x => x.Equals(filename, StringComparison.OrdinalIgnoreCase)))
+                    var action = new TrackedFileAction
                     {
-                        var action = new TrackedFileAction
-                        {
-                            Action = FileActions.Added,
-                            Path = fileInfo.DirectoryName,
-                            FileName = fileInfo.Name,
-                            FileLength = fileInfo.Length,
-                            FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc,
-                            EffectiveDateUtc = DateTime.Now.ToUniversalTime()
-                        };
+                        Action = FileActions.Added,
+                        Path = fileInfo.DirectoryName,
+                        FileName = fileInfo.Name,
+                        FileLength = fileInfo.Length,
+                        FileLastModifiedDateUtc = fileInfo.LastWriteTimeUtc,
+                        EffectiveDateUtc = DateTime.Now.ToUniversalTime()
+                    };
 
-                        _trackedFileStore.AddFileActionToTrackedFile(null, action);
-                    }
+                    _trackedFileStore.AddFileActionToTrackedFile(null, action);
                 }
+            }
+
+            foreach (var subfolder in subfolders)
+            {
+                CrawlDirectory(subfolder);
             }
         }
 
