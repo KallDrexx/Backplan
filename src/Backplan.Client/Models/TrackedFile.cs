@@ -9,6 +9,11 @@ namespace Backplan.Client.Models
     public class TrackedFile
     {
         public int Id { get; set; }
-        public IEnumerable<TrackedFileAction> Actions { get; set; }
+        public List<TrackedFileAction> Actions { get; set; }
+
+        public TrackedFile()
+        {
+            Actions = new List<TrackedFileAction>();
+        }
     }
 }

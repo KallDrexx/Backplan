@@ -76,7 +76,7 @@ namespace Backplan.Client.Tests.IO
             var instance = _mocker.Create<DirectoryCrawler>();
             var trackedFile = new TrackedFile
             {
-                Actions = new[] 
+                Actions = new List<TrackedFileAction>(new[] 
                 {
                     new TrackedFileAction 
                     {
@@ -87,7 +87,7 @@ namespace Backplan.Client.Tests.IO
                         FileLastModifiedDateUtc = writeTime,
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     }
-                }
+                })
             };
 
             _mocker.GetMock<ITrackedFileStore>()
@@ -115,7 +115,7 @@ namespace Backplan.Client.Tests.IO
 
             var trackedFile = new TrackedFile
             {
-                Actions = new[] 
+                Actions = new List<TrackedFileAction>(new[] 
                 {
                     new TrackedFileAction 
                     {
@@ -126,7 +126,7 @@ namespace Backplan.Client.Tests.IO
                         FileLastModifiedDateUtc = writeTime,
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     }
-                }
+                })
             };
 
             _mocker.GetMock<ITrackedFileStore>()
@@ -159,7 +159,7 @@ namespace Backplan.Client.Tests.IO
 
             var trackedFile = new TrackedFile
             {
-                Actions = new[] 
+                Actions = new List<TrackedFileAction>(new[] 
                 {
                     new TrackedFileAction 
                     {
@@ -170,7 +170,7 @@ namespace Backplan.Client.Tests.IO
                         FileLastModifiedDateUtc = writeTime.AddDays(-1),
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     }
-                }
+                })
             };
 
             _mocker.GetMock<ITrackedFileStore>()
@@ -226,7 +226,7 @@ namespace Backplan.Client.Tests.IO
 
             var trackedFile = new TrackedFile
             {
-                Actions = new[] 
+                Actions = new List<TrackedFileAction>(new[] 
                 {
                     new TrackedFileAction 
                     {
@@ -237,7 +237,7 @@ namespace Backplan.Client.Tests.IO
                         FileLastModifiedDateUtc = writeTime,
                         EffectiveDateUtc = DateTime.Now.ToUniversalTime()
                     }
-                }
+                })
             };
 
             _mocker.GetMock<ITrackedFileStore>()

@@ -59,6 +59,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Database\InMemoryTrackedFileStore.cs" />
     <Compile Include="Database\ITrackedFileStore.cs" />
     <Compile Include="IO\DirectoryCrawler.cs" />
     <Page Include="MainWindow.xaml">

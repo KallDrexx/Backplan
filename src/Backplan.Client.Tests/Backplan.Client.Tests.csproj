@@ -73,6 +73,8 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Database\InMemoryTrackedFileStoreTests.cs" />
+    <Compile Include="Database\TrackedFileStoreBaseTests.cs" />
     <Compile Include="IO\DirectoryCrawlerTests.cs" />
     <Compile Include="IO\DirectoryWatcherTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
