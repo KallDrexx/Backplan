@@ -36,5 +36,23 @@ namespace Backplan.Client.Tests.Database
             Assert.AreEqual(filename, result.Actions.First().FileName, "Tracked file action had incorrect file name");
             Assert.AreEqual(directory, result.Actions.First().Path, "Tracked file action had incorrect path");
         }
+
+        [TestMethod]
+        public void Null_Tracked_File_Returned_When_FullPath_Doesnt_Match()
+        {
+            const string filename = "abc.def";
+            const string directory = @"C:\\temp";
+            string fullPath = Path.Combine(directory, filename + "a");
+
+            _trackedFileStore.AddFileActionToTrackedFile(null, new TrackedFileAction
+            {
+                FileName = filename,
+                Path = directory
+            });
+
+            var result = _trackedFileStore.GetTrackedFileByFullPath(fullPath);
+
+            Assert.IsNull(result, "Non-null tracked file returned");
+        }
     }
 }

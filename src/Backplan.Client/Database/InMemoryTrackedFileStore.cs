@@ -32,8 +32,8 @@ namespace Backplan.Client.Database
 
         public TrackedFile GetTrackedFileByFullPath(string nameWithPath)
         {
-            return _trackedFiles.First(x => x.Actions
-                                             .Any(y => Path.Combine(y.Path, y.FileName) == nameWithPath));
+            return _trackedFiles.FirstOrDefault(x => x.Actions
+                                                      .Any(y => Path.Combine(y.Path, y.FileName) == nameWithPath));
         }
     }
 }
