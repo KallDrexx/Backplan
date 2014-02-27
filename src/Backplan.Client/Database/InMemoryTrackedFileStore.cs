@@ -19,7 +19,8 @@ namespace Backplan.Client.Database
 
         public IEnumerable<TrackedFile> GetTrackedFilesInPath(string path)
         {
-            throw new NotImplementedException();
+            return _trackedFiles.Where(x => x.Actions.Any(y => y.Path == path))
+                                .ToArray();
         }
 
         public void AddFileActionToTrackedFile(TrackedFile file, TrackedFileAction action)
