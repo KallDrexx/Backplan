@@ -25,10 +25,13 @@ namespace Backplan.Client.Database
 
         public void AddFileActionToTrackedFile(TrackedFile file, TrackedFileAction action)
         {
-            file = new TrackedFile();
-            file.Actions.Add(action);
+            if (file == null)
+            {
+                file = new TrackedFile();
+                _trackedFiles.Add(file);
+            }
 
-            _trackedFiles.Add(file);
+            file.Actions.Add(action);
         }
 
         public TrackedFile GetTrackedFileByFullPath(string nameWithPath)

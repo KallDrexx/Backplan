@@ -95,5 +95,35 @@ namespace Backplan.Client.Tests.Database
             Assert.IsNotNull(results, "Tracked files enumerable was null");
             Assert.AreEqual(0, results.Count(), "Incorrect number of tracked files returned");
         }
+
+        [TestMethod]
+        public void Passing_In_Existing_Tracked_File_Appends_Action_To_File()
+        {
+            const string filename = "abc.def";
+            const string directory = @"C:\\temp";
+            string fullPath = Path.Combine(directory, filename);
+            var effectiveDate = DateTime.Now;
+
+            _trackedFileStore.AddFileActionToTrackedFile(null, new TrackedFileAction
+            {
+                FileName = filename,
+                Path = directory,
+                EffectiveDateUtc = effectiveDate.AddDays(-1)
+            });
+
+            var file = _trackedFileStore.GetTrackedFileByFullPath(fullPath);
+            _trackedFileStore.AddFileActionToTrackedFile(file, new TrackedFileAction
+            {
+                FileName = filename,
+                Path = directory,
+                EffectiveDateUtc = effectiveDate
+            });
+
+            var result = _trackedFileStore.GetTrackedFileByFullPath(fullPath);
+
+            Assert.AreEqual(2, result.Actions.Count(), "Incorrect number of actions");
+            Assert.IsTrue(result.Actions.Any(x => x.EffectiveDateUtc == effectiveDate.AddDays(-1)), "No action exists that matches the 1st effective date");
+            Assert.IsTrue(result.Actions.Any(x => x.EffectiveDateUtc == effectiveDate), "No action exists that matches the 2nd effective date");
+        }
     }
 }
